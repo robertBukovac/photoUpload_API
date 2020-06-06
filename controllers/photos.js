@@ -2,7 +2,7 @@
 const path = require('path');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
-const { sendPhoto, deletePhoto, updatePhoto, getPhoto } = require("./user");
+const { sendPhoto, deletePhoto, updatePhoto ,getPhotos} = require("./user");
 const connection = require("../config/db");
 
 
@@ -154,3 +154,37 @@ exports.getPhoto = asyncHandler(async (req, res, next) => {
   
 }
 )
+
+
+// @desc Get all Photos 
+// @route GET /api/photos 
+// @acces Private
+exports.getPhotos = asyncHandler(async (req, res, next) => {
+  
+  const limit = parseInt(req.query.limit, 10) || 10;
+  // page number
+  const page = parseInt(req.query.page, 10) || 1;
+  // calculate offset
+ const offset = (page - 1) * limit
+
+  // sort => promjeni u created at   => 
+  // ASCENDING IS BY DEFAULT IF YOU WANT DESCENDING JUST ADD - TO YOUR QUERY VALUE
+  const sort = req.query.sort || 'image_id'
+
+  // select (multiple selects works)
+  const select = req.query.select || '*'
+
+// query for fetching data with page number and offset
+  const prodsQuery = `select ${select} from pictures ORDER BY ${sort} limit ${limit} OFFSET ${offset}`
+    connection.query(prodsQuery, function (error, results, fields) {
+      if (error) return error;
+      res.status(200).json({
+        products_page_count : results.length,
+        page_number : page,
+        data : results
+    })
+    res.end();
+  })
+})
+
+

@@ -4,18 +4,22 @@ const {
     PhotoUpload,
     deletePhoto,
     updatePhoto,
-    getPhoto
+    getPhoto,
+    getPhotos
 } = require('../controllers/photos');
 
 
 const router = express.Router();
 
-// const advancedResults = require('../middleware/advancedResults');
+//const advancedResults = require('../middleware/advancedResults');
 
 const { protect } = require('../middleware/auth');
 
 router
-  .route('/').post(protect,PhotoUpload);
+  .route('/')
+  .post(protect,PhotoUpload)
+  .get(getPhotos)
+
 
 router
   .route('/:id')

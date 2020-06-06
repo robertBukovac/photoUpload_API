@@ -3,7 +3,7 @@ const ErrorResponse = require("../utils/errorResponse");
 const { genSaltSync, hashSync, compareSync } = require("bcrypt");
 const bcrypt = require("bcryptjs");
 const asyncHandler = require("../middleware/async");
-const { create,getUserByUserEmail,getResetPasswordToken,updateUser } = require("./user");
+const { create,getUserByUserEmail,getResetPasswordToken,updateUser,getUserByUserId } = require("./user");
 const sendEmail = require('../utils/sendEmail')
 const connection = require("../config/db");
 const { sign } = require('jsonwebtoken');
@@ -12,18 +12,41 @@ const { sign } = require('jsonwebtoken');
 // @desc Register User
 // @route POST /api/user/register
 // @acces Public
+
 exports.register = asyncHandler(async (req, res, next) => {
   const { email, password, name, lastname } = req.body;
 
-  var salt = bcrypt.genSaltSync(10);
-  const npassword = hashSync(password, salt);
+  if (!email || !password || !name || !lastname) {
+    return next(
+      new ErrorResponse('Please provide valid informations', 400)
+    );
+}
+  if (password.length < 8 ) {
+    return next(
+      new ErrorResponse('Please provide a password with 8 or more characters', 400)
+    );
+}
+var salt = bcrypt.genSaltSync(10);
+const npassword = hashSync(password, salt);
 
-  
- const result = await create({email,npassword, name, lastname });
-  return res.status(200).json({
-    success: true,
-    data: "Succesfully registered",
-  });
+const result = await getUserByUserEmail(email,(err, results) => {
+  if (err) {
+    console.log(err);
+    return;
+  }
+  if (!results) {
+    const result = create({email,npassword, name, lastname });
+    return res.status(200).json({
+      success: true,
+      data: "Succesfully registered",
+    });
+  }
+  else {
+    return next(
+      new ErrorResponse(`${email} is already in use,please pick another`, 400)
+    );
+  }
+})
 });
 
 // @desc Login User
@@ -199,3 +222,26 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
         }
       })
     })
+
+// @desc Get current logged in user
+// @route GET /api/user/me
+// @acces Private
+
+exports.getMe = asyncHandler(async (req, res, next) => {
+
+  const currentUser = req.user.id
+
+  const result = await getUserByUserId(currentUser,(err, results) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    if (!results) {
+      return res.json({
+        success: 0,
+        message: "No User with that id !"
+      });
+    }
+    res.status(200).json({ success: true, data: results });
+  })
+});

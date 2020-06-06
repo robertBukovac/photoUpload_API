@@ -32,6 +32,18 @@ module.exports = {
         }
       );
     },
+    getUserByUserId: async(id,callBack) => {
+      connection.query(
+        `select * from users where id = ?`,
+        [id],
+        (error, results, fields) => {
+          if (error) {
+            callBack(error);
+          }
+          return callBack(null,results[0]);
+        }
+      );
+    },
     updateUser: async(data) => {
       connection.query(
         `update users set password=?, resetPasswordToken=?, resetPasswordExpire=? where email = ?`,
@@ -46,6 +58,18 @@ module.exports = {
             return error;
           }
           return results[0];
+        }
+      );
+    },
+    getPhotos: callBack => {
+      connection.query(
+        `select * from pictures`,
+        [],
+        (error, results, fields) => {
+          if (error) {
+            callBack(error);
+          }
+          return callBack(null, results);
         }
       );
     },
@@ -94,6 +118,18 @@ module.exports = {
         }
       );
     },
+    countPhotos: callBack => {
+      connection.query(
+        `select count(*) as number from pictures`,
+        [],
+        (error, results, fields) => {
+          if (error) {
+            return (error);
+          }
+          return callBack(null, results);
+        }
+      );
+    },
   //Generate and hash password token => zato sto je pozvana na usera a ne na model bit ce metoda
   getResetPasswordToken: async (data) => {  
     connection.query(
@@ -111,7 +147,6 @@ module.exports = {
       }
       
     );  },
-  
   }
 
 
