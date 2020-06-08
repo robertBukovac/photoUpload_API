@@ -9,7 +9,7 @@ const connection = require("../config/db");
 const { sign } = require('jsonwebtoken');
 
 
-// @desc Register User
+// @desc  Register User
 // @route POST /api/user/register
 // @acces Public
 
@@ -26,7 +26,7 @@ exports.register = asyncHandler(async (req, res, next) => {
       new ErrorResponse('Please provide a password with 8 or more characters', 400)
     );
 }
-var salt = bcrypt.genSaltSync(10);
+const salt = bcrypt.genSaltSync(10);
 const npassword = hashSync(password, salt);
 
 const result = await getUserByUserEmail(email,(err, results) => {
@@ -62,7 +62,7 @@ exports.login = asyncHandler(async (req, res, next) => {
       );
   }
 
-  //@TODO
+//@TODO
 // SALT key => .env
 const query = `SELECT * FROM users 
                  WHERE email = ?`;
@@ -90,17 +90,15 @@ connection.query(query,[email],
           token:token
         });        
       } else {
-        res.status(404).json({
-          success: false,
-          data: "Incorrect Username and/or Password!"
-        });
-        res.end();
+        return next(new ErrorResponse("Incorrect Username and/or Password!", 401));
       }
+      res.end();
     }
   );
   });
 
-// @desc Forgor password
+
+// @desc Forgot password
 // @route POST /api/user/forgotpassword
 // @acces Public
 
@@ -112,34 +110,30 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
       new ErrorResponse('Please provide an email', 400)
     );
 }
-  console.log(email)
-  
+
   const result = await getUserByUserEmail(email,(err, results) => {
     if (err) {
       console.log(err);
       return;
     }
     if (!results) {
-      return res.json({
-        success: 0,
-        message: "No User with that email !"
-      });
-    }
-  })
-
-
-  const resetToken = crypto.randomBytes(20).toString('hex');
+      return next(
+        new ErrorResponse('Please provide a valid email', 400)
+      );
+  } 
+    else {
+      const resetToken = crypto.randomBytes(20).toString('hex');
   
   //Hash token and set to resetPasswordToken field
-  const resetPasswordToken = crypto
+  let resetPasswordToken = crypto
   .createHash('sha256')
   .update(resetToken)
   .digest('hex');
   //Set expire  (10 minutes)
-  const resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+  let resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
   
-  const rezultat = await getResetPasswordToken({resetPasswordToken,resetPasswordExpire,email})
+  const rezultat =  getResetPasswordToken({resetPasswordToken,resetPasswordExpire,email})
   console.log(resetToken)
 
   // Create reset URL
@@ -150,29 +144,28 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   const message = `You are receiveing an email because you or someone else has requested the reset of a apssword.Please make a PUT request to: ${resetUrl} `;
 
   try {
-    await sendEmail({
+      sendEmail({
       email: email,
       subject: 'password reset token',
       message,
     });
-    res.status(200).json({ success: true, data: 'Email sent' });
+    console.log('Email sent')
   } catch (err) {
     console.log(err);
-
     // da obrisemo token iz baze u slucaju pogreske
-    getResetPasswordToken = undefined;
+    resetPasswordToken = undefined;
     resetPasswordExpire = undefined;
-    await getResetPasswordToken({resetPasswordToken,resetPasswordExpire,email})
+    getResetPasswordToken({resetPasswordToken,resetPasswordExpire,email})
 
     return next(new ErrorResponse('Email could not been sent', 500));
   }
-
   res.status(200).json({
     success: true,
-    data: "Succesfully registered",
+    data: "Succesfully sent token",
     resetToken:resetToken
   })
-
+    }
+  })
 })
 
 // @desc Reset password
@@ -193,7 +186,6 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
       async function (error,results, fields) {
         if (typeof results !== "undefined" && results.length > 0) {
           let user = results[0];
-          console.log(user)
 
           //Set new password
           let password = req.body.password
@@ -202,24 +194,20 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
           let npassword = hashSync(password, salt);
       
           resetPasswordToken = undefined;
-          let nresetPasswordExpire = undefined;
+          let resetPasswordExpire = undefined;
           let email = user.email
 
 
-          await updateUser({npassword,resetPasswordToken,nresetPasswordExpire,email});
+          await updateUser({npassword,resetPasswordToken,resetPasswordExpire,email});
           
           res.status(200).json({
             success: true,
             data: "Sucessfully changed password !",
-            
           });        
         } else {
-          res.status(404).json({
-            success: false,
-            data: "ne valja!"
-          });
-          res.end();
+          return next(new ErrorResponse('Something went wrong', 404));
         }
+        res.end();
       })
     })
 
@@ -233,15 +221,13 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 
   const result = await getUserByUserId(currentUser,(err, results) => {
     if (err) {
-      console.log(err);
-      return;
+      console.log(err)
+      return next(new ErrorResponse('Something went wrong', 500));
     }
     if (!results) {
-      return res.json({
-        success: 0,
-        message: "No User with that id !"
-      });
+      return next(new ErrorResponse('No User with that Id', 500));
     }
     res.status(200).json({ success: true, data: results });
   })
+  res.end();
 });

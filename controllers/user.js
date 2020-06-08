@@ -22,11 +22,11 @@ module.exports = {
     },
     getUserByUserEmail: async(email,callBack) => {
       connection.query(
-        `select * from users where email = ?`,
+        `select name,lastname,email,password from users where email = ?`,
         [email],
         (error, results, fields) => {
           if (error) {
-            callBack(error);
+            return callBack(error);
           }
           return callBack(null,results[0]);
         }
@@ -34,7 +34,7 @@ module.exports = {
     },
     getUserByUserId: async(id,callBack) => {
       connection.query(
-        `select * from users where id = ?`,
+        `select name,lastname,email,password from users where id = ?`,
         [id],
         (error, results, fields) => {
           if (error) {
@@ -49,7 +49,7 @@ module.exports = {
         `update users set password=?, resetPasswordToken=?, resetPasswordExpire=? where email = ?`,
         [
           data.npassword,
-          data.nresetPasswordToken,
+          data.resetPasswordToken,
           data.resetPasswordExpire,
           data.email
         ],
