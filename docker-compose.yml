@@ -1,0 +1,17 @@
+version: '2.1'
+services:
+    mysql:
+        build: ./db_stuff
+        environment:
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+        healthcheck:
+            test: "exit 0"
+    
+    app:
+        build: .
+        depends_on:
+            mysql:
+                condition: service_healthy
+
+        ports:
+            - "3000:3000"
