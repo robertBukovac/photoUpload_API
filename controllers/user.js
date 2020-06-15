@@ -1,5 +1,4 @@
 const connection = require("../config/db");
-const crypto = require('crypto')
 
 module.exports = {
     create: async (data) => {
@@ -61,18 +60,6 @@ module.exports = {
         }
       );
     },
-    getPhotos: callBack => {
-      connection.query(
-        `select * from pictures`,
-        [],
-        (error, results, fields) => {
-          if (error) {
-            callBack(error);
-          }
-          return callBack(null, results);
-        }
-      );
-    },
     sendPhoto:async (data) => {
       connection.query(
         `insert into pictures(users_id,name,size) 
@@ -118,19 +105,7 @@ module.exports = {
         }
       );
     },
-    countPhotos: callBack => {
-      connection.query(
-        `select count(*) as number from pictures`,
-        [],
-        (error, results, fields) => {
-          if (error) {
-            return (error);
-          }
-          return callBack(null, results);
-        }
-      );
-    },
-  //Generate and hash password token => zato sto je pozvana na usera a ne na model bit ce metoda
+  //Generate and hash password token 
   getResetPasswordToken: async (data) => {  
     connection.query(
       `update users set resetPasswordToken=?,resetPasswordExpire=? where email = ?`,

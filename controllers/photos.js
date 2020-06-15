@@ -52,7 +52,7 @@ exports.PhotoUpload = asyncHandler(async (req, res, next) => {
     });
   });
 
-// @desc update  photo
+// @desc Update  photo
 // @route PUT /api/photos/:id
 // @acces Private
 exports.updatePhoto = asyncHandler(async (req, res, next) => {
@@ -79,8 +79,6 @@ exports.updatePhoto = asyncHandler(async (req, res, next) => {
       })
 
       const result = await updatePhoto({name,size,nid})
-
-
       res.status(200).json({
         success: true,
         data: 'Sucessfully updated photo !',
@@ -88,14 +86,14 @@ exports.updatePhoto = asyncHandler(async (req, res, next) => {
   }
   else { 
     return next(new ErrorResponse('Not allowed to update this photo', 401));
-    }
+  }
     res.end();
   });
 })
 
 
 
-// @desc delete  bootcamp
+// @desc Delete  photo
 // @route DELETE /api/photos/:id
 // @acces Private
 exports.deletePhoto = asyncHandler(async (req, res, next) => {
@@ -145,7 +143,7 @@ exports.getPhoto = asyncHandler(async (req, res, next) => {
 
 // @desc Get all Photos 
 // @route GET /api/photos 
-// @acces Private
+// @acces Public
 exports.getPhotos = asyncHandler(async (req, res, next) => {
   
   const limit = parseInt(req.query.limit, 10) || 10;
